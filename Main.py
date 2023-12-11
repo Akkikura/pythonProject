@@ -27,5 +27,5 @@ for i in result.keys():
     else:
         Ismall[i] = 0
     print(f'Ismall для {i} равняется {Ismall[i]}')
-    H += Ismall[i]
+    H += Ismall[i]*entropy[i]
 print(f'Полная энтропия равна {H}')
