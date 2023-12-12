@@ -16,7 +16,6 @@ def calculate_probabilities(text, symbols_to_encode):
 
     total_characters = len(filtered_text)
     symbol_frequencies = {char: filtered_text.count(char) / total_characters for char in set(filtered_text)}
-
     return symbol_frequencies
 
 
@@ -25,15 +24,21 @@ def calculate_entropy(probabilities):
     return entropy
 
 
-def assign_code_lengths(probabilities):
-    sorted_probabilities = sorted(probabilities.items(), key=lambda x: x[1], reverse=True)
-    code_lengths = {symbol: i + 1 for i, (symbol, _) in enumerate(sorted_probabilities)}
-    return code_lengths
-
-
 def shannon_fano_average_length(codes, probabilities):
     avg_length = sum(len(codes[char]) * probabilities[char] for char in codes)
     return avg_length
+
+
+def is_prefix(code, other_code):
+    return code.startswith(other_code) or other_code.startswith(code)
+
+
+def check_decoding_uniqueness(codes):
+    for code1, symbol1 in codes.items():
+        for code2, symbol2 in codes.items():
+            if code1 != code2 and (code1.startswith(code2) or code2.startswith(code1)):
+                return False
+    return True
 
 
 def build_shannon_fano_tree(symbols):
@@ -76,20 +81,20 @@ def generate_shannon_fano_codes(node, code="", code_dict=None):
 def shannon_fano_encode(text, symbols_to_encode):
     probabilities = calculate_probabilities(text, symbols_to_encode)
 
-    # Определяем длины кодов на основе частот символов
-    code_lengths = assign_code_lengths(probabilities)
-
-    # Генерируем коды символов на основе длин
-    codes = {symbol: '0' * code_lengths[symbol] for symbol in probabilities}
-
     # Сортируем символы по убыванию частот
     sorted_symbols = sorted(probabilities.items(), key=lambda x: x[1], reverse=True)
 
     # Строим дерево Шеннона-Фано
     root = build_shannon_fano_tree(sorted_symbols)
 
-    # Генерируем коды символов на основе построенного дерева
+    # Генерируем коды
     codes = generate_shannon_fano_codes(root)
+
+    # Переназначаем коды символов на более короткие коды
+    current_code = "0"
+    for symbol in sorted(probabilities, key=probabilities.get, reverse=True):
+        codes[symbol] = current_code
+        current_code = bin(int(current_code, 2) + 1)[2:]  # Увеличиваем текущий код на 1 в бинарном представлении
 
     encoded_text = ''.join(codes[symbol] for symbol in text if symbol in symbols_to_encode)
 
@@ -103,12 +108,11 @@ encoded_result, codes, probabilities = shannon_fano_encode(huge_text, symbols_to
 
 entropy = calculate_entropy(probabilities)
 avg_length = shannon_fano_average_length(codes, probabilities)
+decoding_uniqueness = check_decoding_uniqueness(codes)
 
-print("Исходный текст:", huge_text)  # Выводим часть текста для примера
-print("Закодированный текст:", encoded_result)  # Выводим часть закодированного текста для примера
+print("Исходный текст:", huge_text[:50])  # Выводим часть текста для примера
+print("Закодированный текст:", encoded_result[:50])  # Выводим часть закодированного текста для примера
 print("Коды символов Шеннона-Фано:", codes)
 print("Энтропия текста:", entropy)
 print("Среднее количество двоичных разрядов:", avg_length)
-
-
-
+print("Уникальность декодирования:", decoding_uniqueness)
