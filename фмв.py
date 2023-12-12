@@ -1,5 +1,7 @@
 # Python3 program for Shannon Fano Algorithm
 from Main import text
+
+
 class node:
     def __init__(self) -> None:
         # for storing symbol
@@ -36,6 +38,13 @@ def calculate_probabilities(text, symbols_to_encode):
     #     row+=1
 
     return probabilities
+def text_symb_calc(text, symbols_to_encode):
+    count_symb = 0
+    text_sort = set(text)
+    for i in symbols_to_encode:
+        if i in text_sort:
+            count_symb += 1
+    return count_symb
 # function to find shannon code
 def shannon(l, h, p):
     pack1 = 0;
@@ -121,7 +130,7 @@ def final_calc(n):
 total = 0
 s = '0123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюя.,:;- ('
 probabilities = calculate_probabilities(text,s)
-n = 42
+n = text_symb_calc(text, s)
 i = 0
 for symb in probabilities.keys():
     p[i].sym += symb
@@ -158,3 +167,5 @@ shannon(0, n - 1, p)
 calculate_probabilities(text, s)
 # Display the codes
 final = final_calc(n)
+
+print(final)
