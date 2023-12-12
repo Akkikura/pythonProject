@@ -1,10 +1,12 @@
-from pprint import pprint
-from Main import text
 from openpyxl import *
+
+from Main import text
 
 fn = 'table.xlsx'
 wb = load_workbook(fn)
 ws = wb['Лист3']
+
+
 class node:
     def __init__(self) -> None:
         # for storing symbol
@@ -17,6 +19,7 @@ class node:
 
 p = [node() for _ in range(50)]
 
+
 def calculate_probabilities(text, symbols_to_encode):
     row = 2
     filtered_text = ''.join(char for char in text if char in symbols_to_encode)
@@ -27,7 +30,7 @@ def calculate_probabilities(text, symbols_to_encode):
     total_characters = len(filtered_text)
     probabilities = {}
     for symbol, frequency in symbol_frequencies:
-        probabilities[symbol] = frequency/total_characters
+        probabilities[symbol] = frequency / total_characters
     # probabilities_2 = [(symbol, frequency / total_characters) for symbol, frequency in symbol_frequencies]
     # probabilities_2 = [(symbol, frequency / total_characters) for symbol, frequency in symbol_frequencies]
 
@@ -41,6 +44,8 @@ def calculate_probabilities(text, symbols_to_encode):
     #     row+=1
 
     return probabilities
+
+
 # function to find shannon code
 def shannon(l, h, p):
     pack1 = 0;
@@ -119,13 +124,12 @@ def final_calc(n):
         for j in range(p[i].top + 1):
             code += str(p[i].arr[j])
         fin[p[i].sym] = code
-    return(fin)
-
+    return (fin)
 
 
 total = 0
 s = '0123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюя.,:;- ('
-probabilities = calculate_probabilities(text,s)
+probabilities = calculate_probabilities(text, s)
 n = 42
 i = 0
 for symb in probabilities.keys():
@@ -164,11 +168,7 @@ calculate_probabilities(text, symbols_to_encode)
 # Display the codes
 final = final_calc(n)
 
-
 # encoded_result, codes = shannon_fano_encode(huge_text, symbols_to_encode)
-encoded_result, codes, probabilities = shannon_fano_encode(huge_text, symbols_to_encode)
-print(probabilities)
-print(codes)
 wb.save(fn)
 wb.close()
 
