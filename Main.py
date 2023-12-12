@@ -8,17 +8,17 @@ characters = '0123456789абвгдеёжзийклмнопрстуфхцчшщъ
 result = count_characters(text, characters)
 special_symbols = '.,:;- ('
 entropy = {}
-print("Результат подсчета:")
-for char, character_count in result.items():
-    print(f"Символ '{char}': {character_count} раз(а)")
+# print("Результат подсчета:")
+# for char, character_count in result.items():
+    # print(f"Символ '{char}': {character_count} раз(а)")
 text_chars = sum(result.values())
 for i in result.keys():
     entropy[i] = result[i] / text_chars
-for char, character_count in entropy.items():
-    print(f"Энтропия '{char}': {character_count} единиц")
+# for char, character_count in entropy.items():
+    # print(f"Энтропия '{char}': {character_count} единиц")
 P = sum(entropy.values())
-print(f'Всего в тексте {text_chars} символов')
-print(f'Полная вероятность в тексте = {P}')
+# print(f'Всего в тексте {text_chars} символов')
+# print(f'Полная вероятность в тексте = {P}')
 H = 0
 Ismall = {}
 for i in result.keys():
@@ -26,6 +26,6 @@ for i in result.keys():
         Ismall[i] = (-1) * log2(entropy[i])
     else:
         Ismall[i] = 0
-    print(f'Ismall для {i} равняется {Ismall[i]}')
+    # print(f'Ismall для {i} равняется {Ismall[i]}')
     H += Ismall[i]*entropy[i]
-print(f'Полная энтропия равна {H}')
+# print(f'Полная энтропия равна {H}')
