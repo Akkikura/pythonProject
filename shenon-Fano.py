@@ -2,6 +2,7 @@ from Main import text
 from pprint import pprint
 import math
 
+
 class Node:
     def __init__(self, symbol=None, frequency=None):
         self.symbol = symbol
@@ -22,6 +23,12 @@ def calculate_probabilities(text, symbols_to_encode):
 def calculate_entropy(probabilities):
     entropy = -sum(prob * math.log2(prob) for prob in probabilities.values())
     return entropy
+
+
+def assign_code_lengths(probabilities):
+    sorted_probabilities = sorted(probabilities.items(), key=lambda x: x[1], reverse=True)
+    code_lengths = {symbol: i + 1 for i, (symbol, _) in enumerate(sorted_probabilities)}
+    return code_lengths
 
 
 def shannon_fano_average_length(codes, probabilities):
@@ -68,39 +75,28 @@ def generate_shannon_fano_codes(node, code="", code_dict=None):
 
 def shannon_fano_encode(text, symbols_to_encode):
     probabilities = calculate_probabilities(text, symbols_to_encode)
-    root = build_shannon_fano_tree(sorted(probabilities.items(), key=lambda x: x[1], reverse=True))
+
+    # Определяем длины кодов на основе частот символов
+    code_lengths = assign_code_lengths(probabilities)
+
+    # Генерируем коды символов на основе длин
+    codes = {symbol: '0' * code_lengths[symbol] for symbol in probabilities}
+
+    # Сортируем символы по убыванию частот
+    sorted_symbols = sorted(probabilities.items(), key=lambda x: x[1], reverse=True)
+
+    # Строим дерево Шеннона-Фано
+    root = build_shannon_fano_tree(sorted_symbols)
+
+    # Генерируем коды символов на основе построенного дерева
     codes = generate_shannon_fano_codes(root)
 
     encoded_text = ''.join(codes[symbol] for symbol in text if symbol in symbols_to_encode)
 
     return encoded_text, codes, probabilities
 
-
-def shannon_fano_decode(encoded_text, codes):
-    reverse_codes = {code: symbol for symbol, code in codes.items()}
-
-    current_code = ""
-    decoded_text = ""
-
-    for bit in encoded_text:
-        current_code += bit
-        if current_code in reverse_codes:
-            decoded_text += reverse_codes[current_code]
-            current_code = ""
-
-    return decoded_text
-
-
 # Пример использования
-huge_text = "..."  # Ваш огромный текст здесь
-symbols_to_encode = "0123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюя.,:;-"
-
-encoded_result, codes, probabilities = shannon_fano_encode(huge_text, symbols_to_encode)
-
-entropy = calculate_entropy(probabilities)
-avg_length = shannon_fano_average_length(codes, probabilities)
-
-huge_text = text
+huge_text = text  # Ваш огромный текст здесь
 symbols_to_encode = '0123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюя.,:;- ('
 
 encoded_result, codes, probabilities = shannon_fano_encode(huge_text, symbols_to_encode)
@@ -108,13 +104,11 @@ encoded_result, codes, probabilities = shannon_fano_encode(huge_text, symbols_to
 entropy = calculate_entropy(probabilities)
 avg_length = shannon_fano_average_length(codes, probabilities)
 
-# pprint(f'Исходный текст: {huge_text}')
-# pprint(f'Закодированный текст: {encoded_result}')
-# pprint(f'Коды символов: {codes}')
-#
-# decoded_result = shannon_fano_decode(encoded_result, codes)
-# pprint(f'Декодированный текст: {decoded_result}')
-
+print("Исходный текст:", huge_text)  # Выводим часть текста для примера
+print("Закодированный текст:", encoded_result)  # Выводим часть закодированного текста для примера
 print("Коды символов Шеннона-Фано:", codes)
 print("Энтропия текста:", entropy)
 print("Среднее количество двоичных разрядов:", avg_length)
+
+
+
