@@ -1,44 +1,21 @@
-from Main import text
-from pprint import pprint
 import math
 
 
-class node:
-    def __init__(self) -> None:
-        # for storing symbol
-        self.sym = ''
-        # for storing probability or frequency
-        self.pro = 0.0
-        self.arr = [0] * 20
-        self.top = 0
+class Node:
+    def __init__(self, symbol=None, frequency=None):
+        self.symbol = symbol
+        self.frequency = frequency
+        self.left = None
+        self.right = None
 
-
-p = [node() for _ in range(50)]
 
 def calculate_probabilities(text, symbols_to_encode):
-    row = 2
     filtered_text = ''.join(char for char in text if char in symbols_to_encode)
 
-    symbol_frequencies = [(symbol, filtered_text.count(symbol)) for symbol in set(filtered_text)]
-    symbol_frequencies = sorted(symbol_frequencies, key=lambda x: x[1], reverse=True)
-
     total_characters = len(filtered_text)
-    probabilities = {}
-    for symbol, frequency in symbol_frequencies:
-        probabilities[symbol] = frequency/total_characters
-    # probabilities_2 = [(symbol, frequency / total_characters) for symbol, frequency in symbol_frequencies]
-    # probabilities_2 = [(symbol, frequency / total_characters) for symbol, frequency in symbol_frequencies]
+    symbol_frequencies = {char: filtered_text.count(char) / total_characters for char in set(filtered_text)}
 
-    # for i in probabilities:
-    #     value_1 = i[0]
-    #     value_2 = i[1]
-    #     cell = ws.cell(row=row,column=1)
-    #     cell.value = value_1
-    #     cell_2 = ws.cell(row=row,column=2)
-    #     cell_2.value = value_2
-    #     row+=1
-
-    return probabilities
+    return symbol_frequencies
 
 
 def calculate_entropy(probabilities):
@@ -55,6 +32,76 @@ def is_prefix(code, other_code):
     return code.startswith(other_code) or other_code.startswith(code)
 
 
+def check_uniqueness(codes):
+    for code1 in codes.values():
+        for code2 in codes.values():
+            if code1 != code2 and is_prefix(code1, code2):
+                return False
+    return True
+
+
+def build_shannon_fano_tree(symbols):
+    if len(symbols) == 1:
+        return Node(symbol=symbols[0][0], frequency=symbols[0][1])
+
+    total_frequency = sum(symbol[1] for symbol in symbols)
+    cumulative_frequency = 0
+    split_index = 0
+
+    for i, symbol in enumerate(symbols):
+        cumulative_frequency += symbol[1]
+        if cumulative_frequency * 2 >= total_frequency:
+            split_index = i
+            break
+
+    left_branch = build_shannon_fano_tree(symbols[:split_index + 1])
+    right_branch = build_shannon_fano_tree(symbols[split_index + 1:])
+
+    node = Node()
+    node.left = left_branch
+    node.right = right_branch
+
+    return node
+
+
+def generate_shannon_fano_codes(node, code="", code_dict=None):
+    if code_dict is None:
+        code_dict = {}
+
+    if node.symbol:
+        code_dict[node.symbol] = code
+    else:
+        generate_shannon_fano_codes(node.left, code + "0", code_dict)
+        generate_shannon_fano_codes(node.right, code + "1", code_dict)
+
+    return code_dict
+
+
+def shannon_fano_encode(text, symbols_to_encode):
+    probabilities = calculate_probabilities(text, symbols_to_encode)
+    root = build_shannon_fano_tree(sorted(probabilities.items(), key=lambda x: x[1], reverse=True))
+    codes = generate_shannon_fano_codes(root)
+
+    encoded_text = ''.join(codes[symbol] for symbol in text if symbol in symbols_to_encode)
+
+    return encoded_text, codes, probabilities
+
+
+def shannon_fano_decode(encoded_text, codes):
+    reverse_codes = {code: symbol for symbol, code in codes.items()}
+
+    current_code = ""
+    decoded_text = ""
+
+    for bit in encoded_text:
+        current_code += bit
+        if current_code in reverse_codes:
+            decoded_text += reverse_codes[current_code]
+            current_code = ""
+
+    return decoded_text
+
+
 def check_decoding_uniqueness(codes):
     for code1, symbol1 in codes.items():
         for code2, symbol2 in codes.items():
@@ -63,134 +110,19 @@ def check_decoding_uniqueness(codes):
     return True
 
 
-def shannon(l, h, p):
-    pack1 = 0;
-    pack2 = 0;
-    diff1 = 0;
-    diff2 = 0
-    if ((l + 1) == h or l == h or l > h):
-        if (l == h or l > h):
-            return
-        p[h].top += 1
-        p[h].arr[(p[h].top)] = 0
-        p[l].top += 1
-        p[l].arr[(p[l].top)] = 1
+# Пример использования
+huge_text = "..."  # Ваш огромный текст здесь
+symbols_to_encode = "0123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюя.,:;-"
 
-        return
+encoded_result, codes, probabilities = shannon_fano_encode(huge_text, symbols_to_encode)
 
-    else:
-        for i in range(l, h):
-            pack1 = pack1 + p[i].pro
-        pack2 = pack2 + p[h].pro
-        diff1 = pack1 - pack2
-        if (diff1 < 0):
-            diff1 = diff1 * -1
-        j = 2
-        while (j != h - l + 1):
-            k = h - j
-            pack1 = pack2 = 0
-            for i in range(l, k + 1):
-                pack1 = pack1 + p[i].pro
-            for i in range(h, k, -1):
-                pack2 = pack2 + p[i].pro
-            diff2 = pack1 - pack2
-            if (diff2 < 0):
-                diff2 = diff2 * -1
-            if (diff2 >= diff1):
-                break
-            diff1 = diff2
-            j += 1
+entropy = calculate_entropy(probabilities)
+avg_length = shannon_fano_average_length(codes, probabilities)
+decoding_uniqueness = check_decoding_uniqueness(codes)
 
-        k += 1
-        for i in range(l, k + 1):
-            p[i].top += 1
-            p[i].arr[(p[i].top)] = 1
-
-        for i in range(k + 1, h + 1):
-            p[i].top += 1
-            p[i].arr[(p[i].top)] = 0
-
-        # Invoke shannon function
-        shannon(l, k, p)
-        shannon(k + 1, h, p)
-
-
-# Function to sort the symbols
-# based on their probability or frequency
-def sortByProbability(n, p):
-    temp = node()
-    for j in range(1, n):
-        for i in range(n - 1):
-            if ((p[i].pro) > (p[i + 1].pro)):
-                temp.pro = p[i].pro
-                temp.sym = p[i].sym
-
-                p[i].pro = p[i + 1].pro
-                p[i].sym = p[i + 1].sym
-
-                p[i + 1].pro = temp.pro
-                p[i + 1].sym = temp.sym
-
-
-# function to display shannon codes
-def display(n, p):
-    fin = {}
-    for i in range(n - 1, -1, -1):
-        code = ''
-        for j in range(p[i].top + 1):
-            code += str(p[i].arr[j])
-        fin[p[i].sym] = code
-    print()
-    print(fin)
-
-
-
-# Driver code
-total = 0
-s = '0123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюя.,:;- ('
-# Input number of symbols
-print("Enter number of symbols\t: ", end='')
-n = 42
-print(n)
-i = 0
-# Input symbols
-for symb in probabilities.keys():
-    print("Enter symbol", i + 1, " : ", end="")
-    print(symb)
-    # Insert the symbol to node
-    p[i].sym += symb
-    i += 1
-
-# Input probability of symbols
-x = calculate_probabilities(text)
-for i in range(n):
-    print("\nEnter probability of", p[i].sym, ": ", end="")
-    print(x[i])
-
-    # Insert the value to node
-    p[i].pro = x[i]
-    total = total + p[i].pro
-
-    # checking max probability
-    if (total > 1):
-        print("Invalid. Enter new values")
-        total = total - p[i].pro
-        i -= 1
-
-i += 1
-p[i].pro = 1 - total
-# Sorting the symbols based on
-# their probability or frequency
-sortByProbability(n, p)
-
-for i in range(n):
-    p[i].top = -1
-
-# Find the shannon code
-shannon(0, n - 1, p)
-
-# Display the codes
-display(n, p)
-
-print()
-print(p[0].top)
+print("Исходный текст:", huge_text[:50])  # Выводим часть текста для примера
+print("Закодированный текст:", encoded_result[:50])  # Выводим часть закодированного текста для примера
+print("Коды символов Шеннона-Фано:", codes)
+print("Энтропия текста:", entropy)
+print("Среднее количество двоичных разрядов:", avg_length)
+print("Уникальность декодирования:", decoding_uniqueness)
