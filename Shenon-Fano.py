@@ -1,5 +1,5 @@
 import math
-
+from Main import text
 
 class Node:
     def __init__(self, symbol=None, frequency=None):
@@ -111,7 +111,7 @@ def check_decoding_uniqueness(codes):
 
 
 # Пример использования
-huge_text = "..."  # Ваш огромный текст здесь
+huge_text = text  # Ваш огромный текст здесь
 symbols_to_encode = "0123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюя.,:;-"
 
 encoded_result, codes, probabilities = shannon_fano_encode(huge_text, symbols_to_encode)
@@ -120,8 +120,8 @@ entropy = calculate_entropy(probabilities)
 avg_length = shannon_fano_average_length(codes, probabilities)
 decoding_uniqueness = check_decoding_uniqueness(codes)
 
-print("Исходный текст:", huge_text[:50])  # Выводим часть текста для примера
-print("Закодированный текст:", encoded_result[:50])  # Выводим часть закодированного текста для примера
+print("Исходный текст:", huge_text)  # Выводим часть текста для примера
+print("Закодированный текст:", encoded_result)  # Выводим часть закодированного текста для примера
 print("Коды символов Шеннона-Фано:", codes)
 print("Энтропия текста:", entropy)
 print("Среднее количество двоичных разрядов:", avg_length)
